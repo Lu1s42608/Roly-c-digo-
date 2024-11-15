@@ -1,0 +1,109 @@
+#include <Servo.h>
+
+
+const int trigPin = 7;
+const int echoPin = 6;
+const int servoPin = 9;
+
+
+const int motor1Pin1 = 2;
+const int motor1Pin2 = 3;
+const int motor2Pin1 = 4;
+const int motor2Pin2 = 5;
+
+
+const int switchPin = 8;
+const int irSensorPin = 10; 
+Servo myServo;
+
+// medición de distancia
+long duration;
+int distance;
+
+void setup() {
+  
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  myServo.attach(servoPin);
+
+  pinMode(motor1Pin1, OUTPUT);
+  pinMode(motor1Pin2, OUTPUT);
+  pinMode(motor2Pin1, OUTPUT);
+  pinMode(motor2Pin2, OUTPUT);
+
+  pinMode(switchPin, INPUT_PULLUP); 
+  pinMode(irSensorPin, INPUT); 
+  
+
+  myServo.write(90); 
+}
+
+void loop() {
+  // estado del interruptor
+  bool switchState = digitalRead(switchPin);
+  
+  // estado del sensor infrarrojo
+  bool irState = digitalRead(irSensorPin); 
+
+  if (switchState == LOW) { 
+    // Medir distancia 
+    digitalWrite(trigPin, LOW);
+    delayMicroseconds(2);
+
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
+
+    duration = pulseIn(echoPin, HIGH);
+    distance = duration * 0.0344 / 2; 
+    // servomotor 
+    if (distance < 10 || irState == LOW) { //  borde de la mesa
+      myServo.write(0); // Cambiar dirección 
+      moveMotorsBackward();
+      delay(1000); 
+      changeDirection(); // cambiar la dirección del robot
+    } else {
+      myServo.write(90); 
+      moveMotorsForward();
+    }
+  } else { // no presionado
+    // Detener ambos motores 
+    stopMotors();
+    
+    myServo.write(90); // Posición neutral del servomotor
+  }
+
+  delay(500); 
+}
+
+void moveMotorsForward() {
+  digitalWrite(motor1Pin1, HIGH);
+  digitalWrite(motor1Pin2, LOW);
+  digitalWrite(motor2Pin1, HIGH);
+  digitalWrite(motor2Pin2, LOW);
+}
+
+void moveMotorsBackward() {
+  digitalWrite(motor1Pin1, LOW);
+  digitalWrite(motor1Pin2, HIGH);
+  digitalWrite(motor2Pin1, LOW);
+  digitalWrite(motor2Pin2, HIGH);
+}
+
+void stopMotors() {
+  digitalWrite(motor1Pin1, LOW);
+  digitalWrite(motor1Pin2, LOW);
+  digitalWrite(motor2Pin1, LOW);
+  digitalWrite(motor2Pin2, LOW);
+}
+
+void changeDirection() {
+  // Cambia aleatoriamente la dirección
+  int randomDirection = random(0, 2);
+  if (randomDirection == 0) {
+    myServo.write(0); 
+  } else {
+    myServo.write(180); // Girar en la dirección opuesta
+  }
+}
